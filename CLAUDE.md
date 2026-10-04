@@ -100,6 +100,26 @@ UI 一律用 shadcn/ui，**不要手写重复的 Button / Input / Card 等基础
 
 ---
 
+## 照片存储（Cloudflare R2）
+
+照片存在 R2，库里**只存公开 URL**（`Clothing.photoUrl`），应用服务器磁盘不落文件。
+
+- 上传链路：`multer`（memoryStorage）→ `server/storage.ts` 转存 R2 → 返回公开 URL
+- 对象 key：`clothes/<userId>/<uuid>.<ext>`，按用户分目录、UUID 命名
+- 校验：照片**必填**，仅图片格式，上限 10MB；前后端都校验（后端为准）
+- 删除衣物时同步删 R2 对象；换照片时先传新的、成功后才删旧的
+
+**配置 R2 的两个坑**
+1. `R2_ACCESS_KEY_ID` 必须是 **32 位十六进制**的 R2 Access Key。
+   `cfat_` 开头的是 Cloudflare API Token（给 REST API 用的），S3 SDK 会报
+   `Credential access key has length 53, should be 32`
+2. 令牌权限要选 **对象读和写**。只给读权限时 HeadBucket/ListObjects 都成功，
+   但 PutObject 报 `Access Denied`
+- ⚠️ **`bun run --hot` 不会重读 `.env`**（dotenv 不覆盖已存在的环境变量）。
+  改完 `.env` 必须**完整重启**后端，否则新变量读不到
+
+---
+
 ## 组件测试（Vitest + Testing Library）
 
 React 组件的单元测试，隔离、快速，用于覆盖交互细节与状态分支。
@@ -150,7 +170,8 @@ React 组件的单元测试，隔离、快速，用于覆盖交互细节与状�
 1. ✅ 后端骨架与 PostgreSQL
 2. ✅ 账号密码登录（单用户 admin，无注册）
 3. ✅ 地点管理（增删改查 + 列表显示衣物数量）
-4. 衣物管理与照片上传（Cloudflare R2）← **当前阶段**
+4. ✅ 衣物管理与照片上传（Cloudflare R2）
+5. 移动端适配与联调 ← **当前阶段**
 5. 移动端适配与联调
 6. 云端部署
 7. 验收

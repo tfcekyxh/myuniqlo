@@ -22,6 +22,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { api, type LocationItem, type MeStats, type PublicUser } from "@/api";
+import AddCloth from "./AddCloth.tsx";
+import LocationDetail, { type LocationTarget } from "./LocationDetail.tsx";
 
 interface HomeProps {
   user: PublicUser;
@@ -41,12 +43,16 @@ export default function Home({ user, stats, onLogout, onStatsChange }: HomeProps
   const [formNote, setFormNote] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // 二级视图：地点详情 / 添加衣物
+  const [selected, setSelected] = useState<LocationTarget | null>(null);
+  const [adding, setAdding] = useState(false);
+
   const refreshStats = useCallback(async () => {
     try {
       const data = await api.me();
       onStatsChange(data.stats);
     } catch {
-      // 统计刷新失败不影响列表本身，静默忽略
+      // 统计刷新失败不影响列表本身
     }
   }, [onStatsChange]);
 
@@ -64,6 +70,11 @@ export default function Home({ user, stats, onLogout, onStatsChange }: HomeProps
   useEffect(() => {
     void loadLocations();
   }, [loadLocations]);
+
+  async function refreshAll() {
+    await loadLocations();
+    await refreshStats();
+  }
 
   function openCreate() {
     setEditing(null);
@@ -94,8 +105,7 @@ export default function Home({ user, stats, onLogout, onStatsChange }: HomeProps
         await api.locations.create({ name: formName, note: formNote });
       }
       setFormOpen(false);
-      await loadLocations();
-      await refreshStats();
+      await refreshAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : "保存失败");
     } finally {
@@ -108,12 +118,40 @@ export default function Home({ user, stats, onLogout, onStatsChange }: HomeProps
     try {
       await api.locations.remove(deleting.id);
       setDeleting(null);
-      await loadLocations();
-      await refreshStats();
+      await refreshAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : "删除失败");
       setDeleting(null);
     }
+  }
+
+  // 未分配件数 = 总件数 - 各地点件数之和
+  const assignedCount = locations.reduce((sum, item) => sum + item.clothesCount, 0);
+  const unassignedCount = Math.max((stats?.clothes ?? 0) - assignedCount, 0);
+
+  if (adding) {
+    return (
+      <AddCloth
+        locations={locations}
+        defaultLocationId={selected?.id ?? null}
+        onDone={async () => {
+          setAdding(false);
+          await refreshAll();
+        }}
+        onCancel={() => setAdding(false)}
+      />
+    );
+  }
+
+  if (selected) {
+    return (
+      <LocationDetail
+        location={selected}
+        onBack={() => setSelected(null)}
+        onAdd={() => setAdding(true)}
+        onChanged={refreshAll}
+      />
+    );
   }
 
   return (
@@ -145,9 +183,14 @@ export default function Home({ user, stats, onLogout, onStatsChange }: HomeProps
 
       <div className="mt-6 mb-3 flex items-center justify-between">
         <h2 className="text-base font-medium">我的地点</h2>
-        <Button size="sm" onClick={openCreate}>
-          新建地点
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => setAdding(true)}>
+            添加衣物
+          </Button>
+          <Button variant="outline" size="sm" onClick={openCreate}>
+            新建地点
+          </Button>
+        </div>
       </div>
 
       {error && !formOpen ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
@@ -158,19 +201,46 @@ export default function Home({ user, stats, onLogout, onStatsChange }: HomeProps
         <p className="text-sm text-muted-foreground">还没有地点，先建一个吧</p>
       ) : (
         <ul className="flex flex-col gap-3">
+          {unassignedCount > 0 ? (
+            <li>
+              <Card>
+                <CardContent className="py-4">
+                  <button
+                    type="button"
+                    className="w-full text-left"
+                    onClick={() => setSelected({ id: null, name: "未分配" })}
+                  >
+                    <p className="font-medium">未分配</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {unassignedCount} 件衣物
+                    </p>
+                  </button>
+                </CardContent>
+              </Card>
+            </li>
+          ) : null}
+
           {locations.map((location) => (
             <li key={location.id}>
               <Card>
                 <CardContent className="flex items-center justify-between gap-3 py-4">
-                  <div className="min-w-0">
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
+                    onClick={() =>
+                      setSelected({ id: location.id, name: location.name })
+                    }
+                  >
                     <p className="truncate font-medium">{location.name}</p>
                     {location.note ? (
-                      <p className="truncate text-sm text-muted-foreground">{location.note}</p>
+                      <p className="truncate text-sm text-muted-foreground">
+                        {location.note}
+                      </p>
                     ) : null}
                     <p className="mt-1 text-sm text-muted-foreground">
                       {location.clothesCount} 件衣物
                     </p>
-                  </div>
+                  </button>
                   <div className="flex shrink-0 gap-2">
                     <Button variant="outline" size="sm" onClick={() => openEdit(location)}>
                       编辑
@@ -185,10 +255,6 @@ export default function Home({ user, stats, onLogout, onStatsChange }: HomeProps
           ))}
         </ul>
       )}
-
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        衣物管理将在下一阶段接入
-      </p>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent>

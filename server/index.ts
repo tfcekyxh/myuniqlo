@@ -4,6 +4,7 @@ import cors from "cors";
 import { prisma } from "./prisma.ts";
 import authRouter from "./auth.ts";
 import locationsRouter from "./routes/locations.ts";
+import clothesRouter from "./routes/clothes.ts";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -27,12 +28,26 @@ app.use("/api", authRouter);
 // 地点管理：/api/locations
 app.use("/api", locationsRouter);
 
-// 占位：后续阶段在此挂载 /api/clothes 路由
+// 衣物管理：/api/clothes、/api/locations/:id/clothes
+app.use("/api", clothesRouter);
 
-// 请求体 JSON 解析失败时也返回 JSON，避免前端拿到 HTML 报错页
+// 统一返回 JSON 错误，避免前端拿到 HTML 报错页
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
-  const status = typeof err?.status === "number" ? err.status : 500;
-  res.status(status).json({ error: err?.message ?? "服务器内部错误" });
+  // multer 的错误（如文件超过上限）一律按 400 处理
+  const isUploadError = err?.name === "MulterError";
+  const status = isUploadError
+    ? 400
+    : typeof err?.status === "number"
+      ? err.status
+      : 500;
+
+  const message = isUploadError
+    ? err?.code === "LIMIT_FILE_SIZE"
+      ? "照片过大，请上传 10MB 以内的图片"
+      : "照片上传失败"
+    : err?.message ?? "服务器内部错误";
+
+  res.status(status).json({ error: message });
 };
 app.use(errorHandler);
 

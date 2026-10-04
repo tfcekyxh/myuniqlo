@@ -43,3 +43,22 @@ export async function createLocation(request: APIRequestContext, name: string, n
   const body = (await res.json()) as { location: { id: number } };
   return body.location.id;
 }
+
+/** 清空所有衣物（连同 R2 上的照片），保证用例之间互不干扰 */
+export async function resetClothes(request: APIRequestContext) {
+  const token = await authToken(request);
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const res = await request.get("/api/clothes", { headers });
+  const body = (await res.json()) as { clothes: { id: number }[] };
+
+  for (const item of body.clothes) {
+    await request.delete(`/api/clothes/${item.id}`, { headers });
+  }
+}
+
+/** 1x1 的 PNG，够用来跑通上传链路 */
+export const PNG_BUFFER = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==",
+  "base64",
+);

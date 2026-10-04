@@ -34,6 +34,20 @@ export interface LocationInput {
   note?: string | null;
 }
 
+export interface ClothingItem {
+  id: number;
+  locationId: number | null;
+  name: string;
+  /** Cloudflare R2 的公开访问地址，库里只存 URL */
+  photoUrl: string;
+  createdAt: string;
+}
+
+export interface ClothesQuery {
+  locationId?: number;
+  unassigned?: boolean;
+}
+
 export function getToken(): string {
   return localStorage.getItem(TOKEN_KEY) || "";
 }
@@ -107,5 +121,20 @@ export const api = {
       request<{ location: LocationItem }>(`/api/locations/${id}`, { method: "PUT", body: input }),
     remove: (id: number) =>
       request<{ ok: boolean }>(`/api/locations/${id}`, { method: "DELETE" }),
+  },
+  clothes: {
+    list: (query: ClothesQuery = {}) => {
+      const params = new URLSearchParams();
+      if (query.locationId !== undefined) params.set("locationId", String(query.locationId));
+      if (query.unassigned) params.set("unassigned", "true");
+      const suffix = params.toString() ? `?${params.toString()}` : "";
+      return request<{ clothes: ClothingItem[] }>(`/api/clothes${suffix}`);
+    },
+    /** 用 FormData 传照片（name + photo + locationId），后端用 multer 接收 */
+    create: (form: FormData) =>
+      request<{ clothing: ClothingItem }>("/api/clothes", { method: "POST", body: form }),
+    update: (id: number, form: FormData) =>
+      request<{ clothing: ClothingItem }>(`/api/clothes/${id}`, { method: "PUT", body: form }),
+    remove: (id: number) => request<{ ok: boolean }>(`/api/clothes/${id}`, { method: "DELETE" }),
   },
 };
