@@ -1,0 +1,45 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique @db.VarChar(50)
+  passwordSalt String
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  locations    Location[]
+  clothes      Clothing[]
+}
+
+model Location {
+  id        Int        @id @default(autoincrement())
+  userId    Int
+  name      String     @db.VarChar(100)
+  note      String?
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id])
+  clothes   Clothing[]
+
+  @@index([userId])
+}
+
+model Clothing {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  locationId Int?
+  name       String    @db.VarChar(100)
+  photoUrl   String    // 照片必填，存 Cloudflare R2 的 URL
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id])
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  @@index([userId])
+  @@index([locationId])
+}
