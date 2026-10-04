@@ -48,9 +48,14 @@
 | 衣物照片存储 | Cloudflare（R2 对象存储） |
 | 包管理器 | Bun |
 | 登录 | 账号密码 + Token（crypto.scrypt 加盐哈希 + JWT） |
+| 前端组件库 | **shadcn/ui**（Radix UI + Tailwind CSS） |
+| e2e 测试 | **Playwright**（驱动本机 Chrome，移动视口） |
 | 部署 | 前端 Cloudflare Pages + 后端 Node 主机 + 托管 PostgreSQL + Cloudflare R2 |
 
 > 注意：`impl-plan.md` 第 1/2/3/6 节已按上述定稿同步（原提案的原生 H5 / SQLite / 本地目录已废弃；现用 Prisma 替代 `pg`，Bun 替代 npm）。
+>
+> **语言：TypeScript**——前后端源文件统一为 `.ts` / `.tsx`。
+> **登录形态：单用户**——不提供注册，账号固定 `admin`，由 `bun run seed` 初始化。
 
 ---
 
@@ -71,6 +76,45 @@
 3. 衣物归属地点（删地点时其下衣物置空为"未分配"）
 4. 简单账号密码登录（注册/登录/登出，数据隔离）
 5. 仅手机端（竖屏优先、拍照录入、可加到主屏）
+
+---
+
+## 组件库：shadcn/ui
+
+UI 一律用 shadcn/ui，**不要手写重复的 Button / Input / Card 等基础组件**。
+
+- 组件源码进仓库（不是 npm 依赖），路径：`web/src/components/ui/`
+- 底层为 Radix UI + Tailwind CSS，类名合并用 `cn()`（`web/src/lib/utils.ts`）
+- 配置：`web/components.json`
+- 新增组件：`cd web && bunx shadcn@latest add button input card`
+- 主题令牌（圆角、主色等）写在样式入口的 CSS 变量里，改主题只动变量
+
+**使用约定**
+- 优先复用 `ui/` 下已有组件；需要变体用 `className` 覆盖，不要复制一份再改
+- 移动端优先：输入框/按钮点击区不小于 44px，输入框字号 ≥16px（低于会被 iOS 自动放大页面）
+- 图标用 `lucide-react`
+
+---
+
+## e2e 测试（Playwright）
+
+功能改动需**同步补 e2e 用例**，改完本地跑通再提交。
+
+- 用例目录：`web/e2e/`（命名 `*.spec.ts`）；配置：`web/playwright.config.ts`
+- 运行：`cd web && bun run e2e`；可视化调试：`bun run e2e:ui`
+- **前置条件**：后端 3000 与前端 5173 需已在本地启动（配置里不自动拉起，避免端口冲突）
+  指向其他地址：`E2E_BASE_URL=http://192.168.x.x:5173 bun run e2e`
+- 浏览器：`channel: "chrome"` 直接驱动本机已安装的 Google Chrome，**无需下载 Playwright 自带浏览器**
+- **必须串行**：`workers: 1`。并行开多个 Chrome 曾把登录请求压到 5s 超时
+- 视口固定 iPhone 13（产品只面向手机端）
+
+**踩过的坑（别再踩）**
+- `devices["iPhone 13"]` 默认走 webkit，叠加 `channel: "chrome"` 会报 `Unsupported webkit channel "chrome"`，
+  必须显式加 `browserName: "chromium"`
+- `getByText("地点")` 这类短文案会同时命中多处，需 `{ exact: true }`
+- 选择器优先 `getByRole` / `getByLabel`，少依赖 class 名
+
+**当前覆盖**：登录流程 6 个用例（预填 admin、无注册入口、密码错误提示、登录进概览、刷新保持登录、登出后刷新不恢复）
 
 ---
 
@@ -95,8 +139,8 @@
 
 ## 待确认小决策（实施前）
 
-1. 前端用 JS 还是 TS？
-2. 后端是否引入 TS / 分层架构？
+1. ~~前端用 JS 还是 TS？~~ → **已定：TypeScript**
+2. ~~后端是否引入 TS / 分层架构？~~ → **已定：TypeScript**
 3. Cloudflare 用 R2 还是 Images？直传还是后端中转？
 4. 后端托管目标（容器 / 云服务器 / 其他）？
-5. PostgreSQL 用自托管还是托管（Supabase / Neon）？
+5. ~~PostgreSQL 用自托管还是托管？~~ → **已定：托管（当前用 pandastack）**

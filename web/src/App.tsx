@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import Auth from "./pages/Auth.tsx";
 import { api, getToken, clearToken, type MeStats, type PublicUser } from "./api.ts";
 
@@ -43,44 +45,46 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="app">
-        <p className="muted">加载中…</p>
+      <div className="mx-auto w-full max-w-md p-4">
+        <p className="text-sm text-muted-foreground">加载中…</p>
       </div>
     );
   }
 
   if (!user) {
-    return (
-      <div className="app">
-        <Auth onAuthed={handleAuthed} />
-      </div>
-    );
+    return <Auth onAuthed={handleAuthed} />;
   }
 
   return (
-    <div className="app">
-      <header className="home-header">
-        <div>
-          <h1 className="home-title">你好，{user.username}</h1>
-          <p className="muted">这是你的衣橱概览</p>
+    <div className="mx-auto w-full max-w-md p-4">
+      <header className="mb-5 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-medium">你好，{user.username}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">这是你的衣橱概览</p>
         </div>
-        <button className="btn btn-ghost" type="button" onClick={handleLogout}>
+        <Button variant="outline" size="sm" onClick={handleLogout}>
           登出
-        </button>
+        </Button>
       </header>
 
-      <section className="stats">
-        <div className="stat-card">
-          <span className="stat-value">{stats?.locations ?? 0}</span>
-          <span className="stat-label">地点</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value">{stats?.clothes ?? 0}</span>
-          <span className="stat-label">衣物</span>
-        </div>
+      <section className="grid grid-cols-2 gap-3">
+        <Card>
+          <CardContent className="flex flex-col items-center gap-1 py-6">
+            <span className="text-3xl font-medium">{stats?.locations ?? 0}</span>
+            <span className="text-sm text-muted-foreground">地点</span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex flex-col items-center gap-1 py-6">
+            <span className="text-3xl font-medium">{stats?.clothes ?? 0}</span>
+            <span className="text-sm text-muted-foreground">衣物</span>
+          </CardContent>
+        </Card>
       </section>
 
-      <p className="hint">地点与衣物管理将在下一阶段接入</p>
+      <p className="mt-8 text-center text-sm text-muted-foreground">
+        地点与衣物管理将在下一阶段接入
+      </p>
     </div>
   );
 }

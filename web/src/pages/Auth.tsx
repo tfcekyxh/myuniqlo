@@ -1,5 +1,15 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { api, setToken, type PublicUser } from "../api.ts";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { api, setToken, type PublicUser } from "@/api";
 
 const DEFAULT_USERNAME = "admin";
 
@@ -39,48 +49,54 @@ export default function Auth({ onAuthed }: AuthProps) {
   }
 
   return (
-    <div className="auth">
-      <header className="auth-header">
-        <h1>衣橱管家</h1>
-        <p className="muted">随时知道家里有多少衣服、长什么样</p>
-      </header>
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center p-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">衣橱管家</CardTitle>
+          <CardDescription>随时知道家里有多少衣服、长什么样</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="username">用户名</Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                value={username}
+                onChange={handleUsernameChange}
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                // 移动端：点击区与字号都要够大，字号低于 16px 会被 iOS 自动放大页面
+                className="h-12 text-base"
+                required
+              />
+            </div>
 
-      <form className="form" onSubmit={handleSubmit}>
-        <label className="field">
-          <span className="field-label">用户名</span>
-          <input
-            className="input"
-            type="text"
-            value={username}
-            onChange={handleUsernameChange}
-            placeholder="请输入用户名"
-            autoComplete="username"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            required
-          />
-        </label>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password">密码</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                value={password}
+                onChange={handlePasswordChange}
+                autoComplete="current-password"
+                className="h-12 text-base"
+                required
+              />
+            </div>
 
-        <label className="field">
-          <span className="field-label">密码</span>
-          <input
-            className="input"
-            type="password"
-            value={password}
-            onChange={handlePasswordChange}
-            placeholder="请输入密码"
-            autoComplete="current-password"
-            required
-          />
-        </label>
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-        {error ? <p className="error">{error}</p> : null}
-
-        <button className="btn btn-primary" type="submit" disabled={busy}>
-          {busy ? "请稍候…" : "登录"}
-        </button>
-      </form>
+            <Button type="submit" size="lg" className="h-12 w-full text-base" disabled={busy}>
+              {busy ? "请稍候…" : "登录"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
