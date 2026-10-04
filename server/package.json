@@ -4,10 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run --hot index.js",
-    "start": "bun run index.js",
+    "dev": "bun run --hot index.ts",
+    "start": "bun run index.ts",
+    "seed": "bun run seed.ts",
     "migrate": "prisma migrate dev",
-    "generate": "prisma generate"
+    "generate": "prisma generate",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",
@@ -19,6 +21,11 @@
     "multer": "^2.4.0"
   },
   "devDependencies": {
-    "prisma": "^6"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.6.4",
+    "prisma": "^6",
+    "typescript": "^7.0.2"
   }
 }
