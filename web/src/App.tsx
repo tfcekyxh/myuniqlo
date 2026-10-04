@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Auth from "./pages/Auth.tsx";
 import { api, getToken, clearToken, type MeStats, type PublicUser } from "./api.ts";
 
@@ -7,25 +7,33 @@ export default function App() {
   const [stats, setStats] = useState<MeStats | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 拉取当前用户与概览统计；失败则清空登录态（401 已在 api.ts 中清理 token）
+  const loadMe = useCallback(async () => {
+    try {
+      const data = await api.me();
+      setUser(data.user);
+      setStats(data.stats);
+    } catch {
+      setUser(null);
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // 刷新页面时若有 token，先校验是否仍有效
   useEffect(() => {
     if (!getToken()) {
       setLoading(false);
       return;
     }
-    api
-      .me()
-      .then((data) => {
-        setUser(data.user);
-        setStats(data.stats);
-      })
-      .catch(() => {
-        // 401 已在 api.ts 中清理 token
-        setUser(null);
-        setStats(null);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    void loadMe();
+  }, [loadMe]);
+
+  // 登录成功后同样拉一次，保证概览统计不是空的
+  function handleAuthed() {
+    void loadMe();
+  }
 
   function handleLogout() {
     clearToken();
@@ -44,7 +52,7 @@ export default function App() {
   if (!user) {
     return (
       <div className="app">
-        <Auth onAuthed={setUser} />
+        <Auth onAuthed={handleAuthed} />
       </div>
     );
   }
