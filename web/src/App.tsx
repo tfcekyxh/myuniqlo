@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import Auth from "@/pages/Auth";
+import Home from "@/pages/Home";
 import { api, getToken, clearToken, type MeStats, type PublicUser } from "@/api";
 
 export default function App() {
@@ -56,35 +55,11 @@ export default function App() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-md p-4">
-      <header className="mb-5 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="truncate text-xl font-medium">你好，{user.username}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">这是你的衣橱概览</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleLogout}>
-          登出
-        </Button>
-      </header>
-
-      <section className="grid grid-cols-2 gap-3">
-        <Card>
-          <CardContent className="flex flex-col items-center gap-1 py-6">
-            <span className="text-3xl font-medium">{stats?.locations ?? 0}</span>
-            <span className="text-sm text-muted-foreground">地点</span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col items-center gap-1 py-6">
-            <span className="text-3xl font-medium">{stats?.clothes ?? 0}</span>
-            <span className="text-sm text-muted-foreground">衣物</span>
-          </CardContent>
-        </Card>
-      </section>
-
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        地点与衣物管理将在下一阶段接入
-      </p>
-    </div>
+    <Home
+      user={user}
+      stats={stats}
+      onLogout={handleLogout}
+      onStatsChange={setStats}
+    />
   );
 }

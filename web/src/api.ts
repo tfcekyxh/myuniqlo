@@ -20,6 +20,20 @@ export interface MeResponse {
   stats: MeStats;
 }
 
+export interface LocationItem {
+  id: number;
+  name: string;
+  note: string | null;
+  createdAt: string;
+  /** 该地点下的衣物数量，由后端 _count 带出 */
+  clothesCount: number;
+}
+
+export interface LocationInput {
+  name: string;
+  note?: string | null;
+}
+
 export function getToken(): string {
   return localStorage.getItem(TOKEN_KEY) || "";
 }
@@ -85,4 +99,13 @@ export const api = {
   login: (username: string, password: string) =>
     request<AuthResponse>("/api/login", { method: "POST", body: { username, password } }),
   me: () => request<MeResponse>("/api/me"),
+  locations: {
+    list: () => request<{ locations: LocationItem[] }>("/api/locations"),
+    create: (input: LocationInput) =>
+      request<{ location: LocationItem }>("/api/locations", { method: "POST", body: input }),
+    update: (id: number, input: LocationInput) =>
+      request<{ location: LocationItem }>(`/api/locations/${id}`, { method: "PUT", body: input }),
+    remove: (id: number) =>
+      request<{ ok: boolean }>(`/api/locations/${id}`, { method: "DELETE" }),
+  },
 };

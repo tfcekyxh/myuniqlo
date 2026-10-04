@@ -48,7 +48,7 @@
 | 衣物照片存储 | Cloudflare（R2 对象存储） |
 | 包管理器 | Bun |
 | 登录 | 账号密码 + Token（crypto.scrypt 加盐哈希 + JWT） |
-| 前端组件库 | **shadcn/ui**（Radix UI + Tailwind CSS） |
+| 前端组件库 | **shadcn/ui**（Base UI `@base-ui/react` + Tailwind CSS v4） |
 | e2e 测试 | **Playwright**（驱动本机 Chrome，移动视口） |
 | 部署 | 前端 Cloudflare Pages + 后端 Node 主机 + 托管 PostgreSQL + Cloudflare R2 |
 
@@ -84,10 +84,14 @@
 UI 一律用 shadcn/ui，**不要手写重复的 Button / Input / Card 等基础组件**。
 
 - 组件源码进仓库（不是 npm 依赖），路径：`web/src/components/ui/`
-- 底层为 Radix UI + Tailwind CSS，类名合并用 `cn()`（`web/src/lib/utils.ts`）
-- 配置：`web/components.json`
-- 新增组件：`cd web && bunx shadcn@latest add button input card`
-- 主题令牌（圆角、主色等）写在样式入口的 CSS 变量里，改主题只动变量
+- 底层为 **Base UI（`@base-ui/react`）** + Tailwind CSS v4，风格 `base-nova`（`web/components.json`）
+  ——注意**不是 Radix UI**，当前 shadcn 默认风格已切到 Base UI
+- 类名合并用 `cn()`（来自 `cn` 包，`web/src/lib/utils.ts` 也有封装）
+- 新增组件：`cd web && bunx shadcn@latest add button input card dialog`
+- 主题令牌（圆角、主色等）写在 `src/index.css` 的 CSS 变量里，改主题只动变量
+- **已装组件**：button、input、label、card、dialog、alert-dialog
+- ⚠️ `Button` 已改为 `forwardRef`：`DialogClose` / `AlertDialogCancel` 会往它挂 ref，
+  普通函数组件会报 "Function components cannot be given refs"。改 button.tsx 时不要退回普通函数
 
 **使用约定**
 - 优先复用 `ui/` 下已有组件；需要变体用 `className` 覆盖，不要复制一份再改
@@ -143,10 +147,10 @@ React 组件的单元测试，隔离、快速，用于覆盖交互细节与状�
 
 ## 实施阶段（详见 impl-plan.md）
 
-1. 后端骨架与 PostgreSQL
-2. 账号密码登录
-3. 地点管理
-4. 衣物管理与照片上传（Cloudflare R2）
+1. ✅ 后端骨架与 PostgreSQL
+2. ✅ 账号密码登录（单用户 admin，无注册）
+3. ✅ 地点管理（增删改查 + 列表显示衣物数量）
+4. 衣物管理与照片上传（Cloudflare R2）← **当前阶段**
 5. 移动端适配与联调
 6. 云端部署
 7. 验收

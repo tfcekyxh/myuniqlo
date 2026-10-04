@@ -3,6 +3,7 @@ import express, { type ErrorRequestHandler } from "express";
 import cors from "cors";
 import { prisma } from "./prisma.ts";
 import authRouter from "./auth.ts";
+import locationsRouter from "./routes/locations.ts";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -23,7 +24,10 @@ app.get("/api/health", async (_req, res) => {
 // 认证：/api/login、/api/me（单用户，无注册入口）
 app.use("/api", authRouter);
 
-// 占位：后续阶段在此挂载 /api/locations、/api/clothes 路由
+// 地点管理：/api/locations
+app.use("/api", locationsRouter);
+
+// 占位：后续阶段在此挂载 /api/clothes 路由
 
 // 请求体 JSON 解析失败时也返回 JSON，避免前端拿到 HTML 报错页
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {

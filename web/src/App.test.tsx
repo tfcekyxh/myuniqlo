@@ -11,7 +11,12 @@ vi.mock("@/api", async (importOriginal) => {
     getToken: vi.fn(),
     clearToken: vi.fn(),
     setToken: vi.fn(),
-    api: { ...actual.api, me: vi.fn(), login: vi.fn() },
+    api: {
+      ...actual.api,
+      me: vi.fn(),
+      login: vi.fn(),
+      locations: { ...actual.api.locations, list: vi.fn() },
+    },
   };
 });
 
@@ -23,6 +28,7 @@ const ME: MeResponse = {
 describe("App 登录态切换", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(api.locations.list).mockResolvedValue({ locations: [] });
   });
 
   it("没有 token 时直接展示登录页，且不请求 /api/me", async () => {
