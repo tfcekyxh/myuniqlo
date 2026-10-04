@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import Auth from "./pages/Auth.tsx";
-import { api, getToken, clearToken, type MeStats, type PublicUser } from "./api.ts";
+import Auth from "@/pages/Auth";
+import { api, getToken, clearToken, type MeStats, type PublicUser } from "@/api";
 
 export default function App() {
   const [user, setUser] = useState<PublicUser | null>(null);

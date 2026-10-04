@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
@@ -16,5 +16,12 @@ export default defineConfig({
     proxy: {
       "/api": "http://localhost:3000",
     },
+  },
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
+    include: ["src/**/*.test.{ts,tsx}"],
+    // e2e 不在这里跑，由 Playwright 单独执行
+    exclude: ["e2e/**", "node_modules/**"],
   },
 });

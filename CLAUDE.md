@@ -96,6 +96,29 @@ UI 一律用 shadcn/ui，**不要手写重复的 Button / Input / Card 等基础
 
 ---
 
+## 组件测试（Vitest + Testing Library）
+
+React 组件的单元测试，隔离、快速，用于覆盖交互细节与状态分支。
+
+- 框架：Vitest + `@testing-library/react`（jsdom 环境）
+- 位置：与组件同目录，命名 `*.test.tsx`（如 `src/pages/Auth.test.tsx`）
+- 运行：`cd web && bun run test`；监听模式 `bun run test:watch`
+- 初始化文件：`src/test/setup.ts`——注入 jest-dom 断言，每个用例后自动 cleanup 并清空 localStorage
+
+**编写约定**
+- 用 `vi.mock("@/api")` 隔离网络层，组件测试**不依赖真实后端**
+- 查询优先 `getByRole` / `getByLabelText`，与 e2e 保持同一套习惯
+- 断言用 jest-dom 匹配器：`toBeVisible()` / `toHaveValue()` / `toBeDisabled()`
+- 异步等待用 `findBy*` 或 `waitFor`，不要用固定 sleep
+- **版本约束**：当前 Vite 5，必须配 vitest 3（vitest 5 要求 Vite 6+，会报 peer 冲突）
+
+**与 e2e 的分工**
+- 组件测试：隔离后端，覆盖表单校验、加载/禁用/报错等状态分支
+- e2e：真实浏览器 + 真实前后端，覆盖关键主流程
+- 两者都要写：组件测试改起来快，e2e 保证端到端真的通
+
+---
+
 ## e2e 测试（Playwright）
 
 功能改动需**同步补 e2e 用例**，改完本地跑通再提交。
